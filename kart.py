@@ -11,11 +11,17 @@ girdi.json alanlari:
   soru    : kararin cevapladigi soru, tek cumle (zorunlu)
   ilke    : kararin ilkesi, tek cumle (zorunlu)
   kunye   : "E. 2024/123  K. 2025/456  T. 12.03.2025" (zorunlu)
+
+Aylik kapak karti icin:
+  tur     : "kapak"
+  baslik  : "Ekim 2026"
+  alt     : "Aylik Ictihat Notu" (istege bagli)
+  liste   : ["Yargitay HGK - konu", ...] en fazla 6 satir
 """
 import io, json, os, sys, urllib.request
 from PIL import Image, ImageDraw, ImageFont
 
-VARSAYILAN_KAYNAK = "https://raw.githubusercontent.com/KULLANICI_ADI/dereli-sosyal-medya/main"
+VARSAYILAN_KAYNAK = "https://raw.githubusercontent.com/DereliAvukatlik/dereli-sosyal-medya/main"
 
 W, H = 1080, 1920
 PETROL = (14, 59, 58)
@@ -147,6 +153,37 @@ def ciz_kart(veri, f, cikti):
     img.save(cikti, "PNG", optimize=True)
 
 
+def ciz_kapak(veri, f, cikti):
+    img = Image.new("RGB", (W, H), PETROL)
+    ciz = ImageDraw.Draw(img)
+    y = UST_SINIR
+    mark = Image.open(io.BytesIO(f["mark"])).convert("RGBA")
+    mh = 120
+    mark = mark.resize((round(mark.width * mh / mark.height), mh), Image.LANCZOS)
+    img.paste(mark, ((W - mark.width) // 2, y), mark)
+    y += mh + 34
+    aralikli_yaz(ciz, (W / 2, y), "DERELİ AVUKATLIK BÜROSU", yazi_tipi(f["cinzel"], 28, 500), KAGIT_SOLUK, 6)
+    y += 90
+    ciz.line([(W / 2 - 60, y), (W / 2 + 60, y)], fill=KAGIT_SOLUK, width=2)
+    y += 90
+    aralikli_yaz(ciz, (W / 2, y), tr_buyuk(veri.get("alt", "Aylık İçtihat Notu")), yazi_tipi(f["cinzel"], 34, 500), KAGIT_SOLUK, 5)
+    y += 70
+    f_bas = yazi_tipi(f["cinzel"], 92, 600)
+    for s_ in satirla(ciz, tr_buyuk(veri["baslik"]), f_bas, METIN_GENISLIK, 4):
+        aralikli_yaz(ciz, (W / 2, y), s_, f_bas, KAGIT, 4)
+        y += 115
+    y += 70
+    f_lis = yazi_tipi(f["garamond"], 38, 400)
+    for madde in veri.get("liste", [])[:6]:
+        for s_ in satirla(ciz, madde, f_lis, METIN_GENISLIK):
+            if y > ALT_SINIR - 50:
+                raise SystemExit("HATA: kapak listesi sigmiyor; maddeleri kisaltin.")
+            ciz.text((W / 2, y), s_, font=f_lis, fill=KAGIT, anchor="ma")
+            y += 50
+        y += 26
+    img.save(cikti, "PNG", optimize=True)
+
+
 def main():
     a = sys.argv[1:]
     if len(a) < 2:
@@ -158,11 +195,16 @@ def main():
         yerel = a[a.index("--yerel") + 1]
     with open(a[0], encoding="utf-8") as fh:
         veri = json.load(fh)
-    for alan in ("kurum", "soru", "ilke", "kunye"):
-        if not veri.get(alan):
-            raise SystemExit(f"HATA: '{alan}' alani bos.")
     dosyalar = {k: oku(kaynak, yerel, v) for k, v in DOSYALAR.items()}
-    ciz_kart(veri, dosyalar, a[1])
+    if veri.get("tur") == "kapak":
+        if not veri.get("baslik"):
+            raise SystemExit("HATA: 'baslik' alani bos.")
+        ciz_kapak(veri, dosyalar, a[1])
+    else:
+        for alan in ("kurum", "soru", "ilke", "kunye"):
+            if not veri.get(alan):
+                raise SystemExit(f"HATA: '{alan}' alani bos.")
+        ciz_kart(veri, dosyalar, a[1])
     print("Kart olusturuldu:", a[1])
 
 
