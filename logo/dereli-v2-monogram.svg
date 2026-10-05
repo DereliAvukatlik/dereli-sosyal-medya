@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" fill="#0E3B3A"/>
+<g transform="translate(-89.84000000000003,-81.92000000000002) scale(1.32)">
+<mask id="cutd"><rect x="-40" y="-40" width="600" height="600" fill="white"/>
+<path d="M 96 270 C 168 236, 214 236, 262 260 C 310 284, 352 282, 420 246" fill="none" stroke="black" stroke-width="36" stroke-linecap="round"/></mask>
+<path d="M 148 120 H 240 A 136 136 0 0 1 240 392 H 148 Z" fill="#F7F4EE" mask="url(#cutd)"/></g>
+</svg>
